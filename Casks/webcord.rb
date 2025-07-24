@@ -24,7 +24,7 @@ cask "webcord" do
 
   postflight do
     system_command "xattr",
-                   args: ["-cr", "\#{appdir}/#{APP_FILENAME}"],
+                   args: ["-cr", "\#{appdir}/WebCord.app"],
                    sudo: false
   end
 

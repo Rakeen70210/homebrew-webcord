@@ -10,6 +10,8 @@ on:
 jobs:
   update:
     runs-on: macos-latest # Use a macOS runner because we need Homebrew
+    permissions:
+      contents: write
     steps:
       # Step 1: Check out the repository's code so we can work with it
       - name: Checkout repository
