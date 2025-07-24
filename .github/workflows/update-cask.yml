@@ -1,0 +1,48 @@
+name: Update WebCord Cask
+
+# This workflow runs on a schedule (once a day) and can also be triggered manually.
+on:
+  workflow_dispatch: # Allows you to run this workflow manually from the Actions tab
+  schedule:
+    # Runs at 08:00 UTC every day. You can change the time.
+    - cron: '0 8 * * *'
+
+jobs:
+  update:
+    runs-on: macos-latest # Use a macOS runner because we need Homebrew
+    steps:
+      # Step 1: Check out the repository's code so we can work with it
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Install jq, a dependency for our script
+      - name: Install dependencies
+        run: brew install jq
+
+      # Step 3: Make the script executable and run it
+      - name: Run the update script
+        run: |
+          chmod +x ./generate_webcord_cask.sh
+          ./generate_webcord_cask.sh
+
+      # Step 4: Check for changes, and if there are any, commit and push them
+      - name: Commit and push if changed
+        run: |
+          # Configure git with a bot user
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          
+          # Add the potentially changed Cask file to staging
+          git add Casks/webcord.rb
+          
+          # Check if there are any changes staged for commit
+          # If no changes, exit gracefully.
+          if git diff --staged --quiet; then
+            echo "No new version found. No changes to commit."
+            exit 0
+          fi
+          
+          # If there are changes, commit and push to the main branch
+          echo "New version found. Committing and pushing update."
+          git commit -m "Update webcord cask to latest version"
+          git push
