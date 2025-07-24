@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# This script is designed to be run from the root of the Git repository.
-
 # --- Configuration ---
 CASK_NAME="webcord"
 REPO_OWNER="SpacingBat3"
@@ -11,27 +9,46 @@ OUTPUT_FILE="${OUTPUT_DIR}/${CASK_NAME}.rb"
 TEMP_DIR="/tmp/${CASK_NAME}_cask_build_$$"
 
 # --- Prerequisites Check ---
-# ... (You can keep your checks here, they are good practice) ...
+# (Skipping for brevity, assuming they are installed from previous steps)
 
 echo "--- Generating Homebrew Cask for ${CASK_NAME} ---"
-# ... (The entire middle of your script for fetching versions and checksums remains the same) ...
 
-# --- [Copy the middle of your working script here] ---
-# For brevity, I'm skipping the middle, but it should be identical to your last working version.
-# Just ensure the final `cat << EOF > "$OUTPUT_FILE"` part is as below.
-# --- [End of copied section] ---
+# --- 1. Fetch Latest Version from GitHub API ---
+LATEST_RELEASE_JSON=$(curl -s "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest")
+TAG_NAME=$(echo "$LATEST_RELEASE_JSON" | jq -r '.tag_name')
+VERSION=$(echo "$TAG_NAME" | sed 's/^v//')
+echo "Latest WebCord version detected: $VERSION (from tag: $TAG_NAME)"
 
+# --- 2. Download and Calculate Checksums ---
+# (Using a temporary directory for cleanliness)
+TEMP_DIR="/tmp/${CASK_NAME}_cask_build_$$"
+mkdir -p "$TEMP_DIR"
+CHECKSUM_ARM64=""
+CHECKSUM_X64=""
+ARCHITECTURES=("arm64" "x64")
 
-# --- The rest of your script should look like this ---
+for ARCH in "${ARCHITECTURES[@]}"; do
+    DMG_FILENAME="WebCord-${VERSION}-${ARCH}.dmg"
+    DOWNLOAD_URL="https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${TAG_NAME}/${DMG_FILENAME}"
+    TEMP_PATH="${TEMP_DIR}/${DMG_FILENAME}"
+    echo "Downloading ${DMG_FILENAME}..."
+    curl -L --progress-bar -o "$TEMP_PATH" "$DOWNLOAD_URL"
+    if [ ! -f "$TEMP_PATH" ]; then
+        echo "Warning: Download failed for ${DMG_FILENAME}."
+        continue
+    fi
+    echo "Calculating SHA256 for ${DMG_FILENAME}..."
+    LOCAL_SHA256=$(shasum -a 256 "$TEMP_PATH" | awk '{print $1}')
+    if [ "$ARCH" == "arm64" ]; then CHECKSUM_ARM64="$LOCAL_SHA256"; fi
+    if [ "$ARCH" == "x64" ]; then CHECKSUM_X64="$LOCAL_SHA256"; fi
+done
 
 echo "--- Writing Cask file to: ${OUTPUT_FILE} ---"
 
-# --- Generate the Cask Ruby file content ---
+# --- 4. Generate the Cask Ruby file content ---
 APP_FILENAME="WebCord.app"
 
-# Create the output directory if it doesn't exist
-mkdir -p "$OUTPUT_DIR"
-
+# THIS IS THE CRUCIAL FIX:
 # Create a bash variable that holds the literal string '#{version}'.
 LITERAL_RUBY_VERSION_VAR='#{version}'
 
@@ -40,6 +57,7 @@ cask "${CASK_NAME}" do
   version "${VERSION}"
 
   on_arm do
+    # Use the pre-constructed literal variable. Bash will expand it to '#{version}'.
     url "https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/v${LITERAL_RUBY_VERSION_VAR}/WebCord-${LITERAL_RUBY_VERSION_VAR}-arm64.dmg"
     sha256 "${CHECKSUM_ARM64}"
   end
@@ -73,7 +91,7 @@ cask "${CASK_NAME}" do
 end
 EOF
 
-# --- Clean up temporary files ---
+# --- 5. Clean up temporary files ---
 rm -rf "$TEMP_DIR"
 
 echo "--- Cask Generation Complete! ---"
