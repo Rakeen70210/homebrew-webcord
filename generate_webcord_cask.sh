@@ -51,6 +51,7 @@ APP_FILENAME="WebCord.app"
 # THIS IS THE CRUCIAL FIX:
 # Create a bash variable that holds the literal string '#{version}'.
 LITERAL_RUBY_VERSION_VAR='#{version}'
+LITERAL_RUBY_APPDIR_VAR='#{appdir}'
 
 cat << EOF > "$OUTPUT_FILE"
 cask "${CASK_NAME}" do
@@ -79,7 +80,7 @@ cask "${CASK_NAME}" do
 
   postflight do
     system_command "xattr",
-                   args: ["-cr", "\#{appdir}/WebCord.app"],
+                   args: ["-cr", "${LITERAL_RUBY_APPDIR_VAR}/WebCord.app"],
                    sudo: false
   end
 
