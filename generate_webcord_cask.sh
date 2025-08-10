@@ -8,14 +8,29 @@ OUTPUT_DIR="./Casks" # The output directory is relative to the script location
 OUTPUT_FILE="${OUTPUT_DIR}/${CASK_NAME}.rb"
 TEMP_DIR="/tmp/${CASK_NAME}_cask_build_$$"
 
-# --- Prerequisites Check ---
-# (Skipping for brevity, assuming they are installed from previous steps)
-
 echo "--- Generating Homebrew Cask for ${CASK_NAME} ---"
 
 # --- 1. Fetch Latest Version from GitHub API ---
-LATEST_RELEASE_JSON=$(curl -s "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest")
+# Use an auth token if provided by the environment (for GitHub Actions)
+AUTH_HEADER=""
+if [ -n "$GH_TOKEN" ]; then
+  AUTH_HEADER="-H \"Authorization: Bearer ${GH_TOKEN}\""
+fi
+
+echo "Fetching latest release information from GitHub API..."
+# The eval is used to correctly handle the quoted header string
+LATEST_RELEASE_JSON=$(eval "curl -s -L ${AUTH_HEADER} https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest")
+
 TAG_NAME=$(echo "$LATEST_RELEASE_JSON" | jq -r '.tag_name')
+
+# --- THIS IS THE CRUCIAL ERROR HANDLING ---
+# If jq returns "null" or an empty string, exit with an error.
+if [ "$TAG_NAME" == "null" ] || [ -z "$TAG_NAME" ]; then
+  echo "Error: Failed to get a valid tag name from GitHub API."
+  echo "API Response: $LATEST_RELEASE_JSON"
+  exit 1
+fi
+
 VERSION=$(echo "$TAG_NAME" | sed 's/^v//')
 echo "Latest WebCord version detected: $VERSION (from tag: $TAG_NAME)"
 
