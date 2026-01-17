@@ -23,6 +23,8 @@ jobs:
 
       # Step 3: Make the script executable and run it
       - name: Run the update script
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           chmod +x ./generate_webcord_cask.sh
           ./generate_webcord_cask.sh
