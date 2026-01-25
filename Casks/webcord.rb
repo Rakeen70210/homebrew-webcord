@@ -3,12 +3,12 @@ cask "webcord" do
 
   on_arm do
     # Use the pre-constructed literal variable. Bash will expand it to '#{version}'.
-    url "https://github.com/SpacingBat3/WebCord/releases/download/v#{version}/WebCord-#{version}-arm64.dmg"
-    sha256 "0019dfc4b32d63c1392aa264aed2253c1e0c2fb09216f8e2cc269bbfb8bb49b5"
+    url "https://github.com/SpacingBat3/WebCord/releases/download/v#{version}/WebCord.arm64.dmg"
+    sha256 "eb00ecad646253f63a39482cb222389103d894866edb69b1d200b0f463fa1117"
   end
   on_intel do
-    url "https://github.com/SpacingBat3/WebCord/releases/download/v#{version}/WebCord-#{version}-x64.dmg"
-    sha256 "0019dfc4b32d63c1392aa264aed2253c1e0c2fb09216f8e2cc269bbfb8bb49b5"
+    url "https://github.com/SpacingBat3/WebCord/releases/download/v#{version}/WebCord.x64.dmg"
+    sha256 "b86adf7b229dd32c19832b52011dbf6a1368d8ffeea6782516761f7e51937e24"
   end
 
   name "WebCord"
